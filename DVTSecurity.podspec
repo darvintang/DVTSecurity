@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'DVTSecurity'
-  s.version          = '1.0'
+  s.version          = '1.1'
   s.summary          = 'DVTSecurity'
 
   s.description      = <<-DESC
