@@ -9,7 +9,7 @@
 
  MIT License
 
- Copyright (c) 2021 darvin http://blog.tcoding.cn
+ Copyright (c) 2022 darvin http://blog.tcoding.cn
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,6 @@
  */
 
 import Foundation
-import SwiftyRSA
 
 extension String: RSANameSpace { }
 
@@ -71,7 +70,7 @@ public extension RSABaseWrapper where RSAT == String {
     ///   - publicPemKey: 公钥
     ///   - type: 类型
     /// - Returns: 加密后的结果
-    func encrypt(_ publicPemKey: String? = nil, padding type: Padding = .PKCS1) throws -> String {
+    func encrypt(_ publicPemKey: String? = nil, padding type: NewPadding = .rsaEncryptionPKCS1) throws -> String {
         guard let baseString = self.base.data(using: .utf8) else {
             throw SwiftyRSAError.stringToDataConversionFailed
         }
@@ -83,7 +82,7 @@ public extension RSABaseWrapper where RSAT == String {
     ///   - privatePemKey: 私钥
     ///   - type: 类型
     /// - Returns: 解密后的结果
-    func decrypt(_ privatePemKey: String? = nil, padding type: Padding = .PKCS1) throws -> String {
+    func decrypt(_ privatePemKey: String? = nil, padding type: NewPadding = .rsaEncryptionPKCS1) throws -> String {
         guard let signedData = Data(base64Encoded: self.base, options: [.ignoreUnknownCharacters]) else {
             throw SwiftyRSAError.stringToDataConversionFailed
         }

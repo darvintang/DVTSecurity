@@ -9,7 +9,7 @@
 
  MIT License
 
- Copyright (c) 2021 darvin http://blog.tcoding.cn
+ Copyright (c) 2022 darvin http://blog.tcoding.cn
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -104,7 +104,7 @@ public class KeyChain {
 
     @discardableResult
     public func set(_ value: Data, for key: String) -> Error? {
-        var keyChainItem = self.create(for: key, value: value)
+        let keyChainItem = self.create(for: key, value: value)
         return self.queue.sync {
             let osStatus = SecItemAdd(keyChainItem as CFDictionary, nil)
             switch osStatus {
@@ -203,9 +203,9 @@ public class KeyChain {
                                     } else {
                                         values.append(value)
                                     }
-                                    var item = self.create(for: account)
+                                    let item = self.create(for: account)
                                     self.queue.sync {
-                                        SecItemDelete(item as CFDictionary)
+                                        let _ = SecItemDelete(item as CFDictionary)
                                     }
                                 }
                             }
