@@ -9,7 +9,7 @@
 
  MIT License
 
- Copyright (c) 2022 darvin http://blog.tcoding.cn
+ Copyright (c) 2023 darvin http://blog.tcoding.cn
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -41,13 +41,13 @@ public class KeyChain {
     private var uuid: String
     private var synchronizable: Bool
     private var queue: DispatchQueue
-    private let KeyChainTestKey = "cn.tcoding.DVTFoundation.KeyChain.KeyChainTestKey"
+    private let KeyChainTestKey = "cn.tcoding.Security.KeyChain.KeyChainTestKey"
     private let serviceName: String
 
     public init(iCloud synchronizable: Bool = false) {
         self.synchronizable = synchronizable
         self.uuid = UUID().uuidString
-        self.queue = DispatchQueue(label: "cn.tcoding.DVTFoundation.KeyChain.queue.\(UUID().uuidString)")
+        self.queue = DispatchQueue(label: "cn.tcoding.Security.KeyChain.queue.\(UUID().uuidString)")
         self.serviceName = (Bundle.main.infoDictionary?["CFBundleIdentifier"] as? String) ?? ""
     }
 
@@ -65,19 +65,27 @@ public class KeyChain {
         _default
     }
 
-    private let UDIDStringKey = "cn.tcoding.DVTFoundation.KeyChain.UDIDStringKey"
+    private let userDefaultsPrefix = "UserDefaults_DVTSecurity_Prefix_"
+    private static let UDIDStringKey = "cn.tcoding.Security.KeyChain.UDIDStringKey"
+
     /// udid替代品，通过将udid保存到keychain来定义设备标识，在系统还原之后会被重置
-    public var UDIDString: String {
-        if self.uuid != Self.default.uuid {
-            return Self.default.UDIDString
+    public static var UDIDString: String {
+        var uuidString: String
+        if let string = self.default.valueString(for: UDIDStringKey) {
+            uuidString = string
+        } else if let string = self.default.valueString(for: "cn.tcoding.DVTFoundation.KeyChain.UDIDStringKey") { // 兼容
+            uuidString = string
+            self.default.set(uuidString, for: UDIDStringKey, use: true)
         } else {
-            guard let string = self.valueString(for: self.UDIDStringKey), !string.isEmpty else {
-                let uuidString = UUID().uuidString
-                self.set(uuidString, for: self.UDIDStringKey)
-                return uuidString
-            }
-            return string
+            uuidString = UUID().uuidString
+            self.default.set(uuidString, for: UDIDStringKey, use: true)
         }
+        return uuidString
+    }
+
+    @available(*, unavailable, message: "2.0.1版本之后弃用该方法")
+    public var UDIDString: String {
+        Self.UDIDString
     }
 
     private func getError(_ code: OSStatus) -> Error? {
@@ -90,21 +98,26 @@ public class KeyChain {
     }
 
     @discardableResult
-    public func set(_ value: Bool, for key: String) -> Error? {
-        return self.set(value ? chainBoolTrue : chainBoolFalse, for: key)
+    public func set(_ value: Bool, for key: String, use defaults: Bool = false) -> Error? {
+        return self.set(value ? chainBoolTrue : chainBoolFalse, for: key, use: defaults)
     }
 
     @discardableResult
-    public func set(_ value: String, for key: String) -> Error? {
+    public func set(_ value: String, for key: String, use defaults: Bool = false) -> Error? {
         guard let data = value.data(using: .utf8) else {
             return self.getError(errSecDataNotAvailable)
         }
-        return self.set(data, for: key)
+        return self.set(data, for: key, use: defaults)
     }
 
     @discardableResult
-    public func set(_ value: Data, for key: String) -> Error? {
-        let keyChainItem = self.create(for: key, value: value)
+    public func set(_ value: Data, for key: String, use defaults: Bool = false) -> Error? {
+        var keyChainItem = self.create(for: key, value: value)
+        keyChainItem[kSecAttrAccessible] = kSecAttrAccessibleAfterFirstUnlock
+        if defaults {
+            UserDefaults.standard.set(value, forKey: self.userDefaultsPrefix + key)
+            UserDefaults.standard.synchronize()
+        }
         return self.queue.sync {
             let osStatus = SecItemAdd(keyChainItem as CFDictionary, nil)
             switch osStatus {
@@ -148,14 +161,15 @@ public class KeyChain {
                 SecItemCopyMatching(keyChainItem as CFDictionary, UnsafeMutablePointer(pointer))
             }
         }
+        let userData = UserDefaults.standard.value(forKey: self.userDefaultsPrefix + key) as? Data
         switch status {
             case errSecSuccess:
                 guard let data = result as? Data else {
-                    return nil
+                    return userData
                 }
                 return data
             default:
-                return nil
+                return userData
         }
     }
 
@@ -195,7 +209,7 @@ public class KeyChain {
                     if let results = result as? [[CFString: Any]] {
                         for attributes in results {
                             if let account = attributes[kSecAttrAccount] as? String, let data = attributes[kSecValueData] as? Data, let value = String(data: data, encoding: .utf8) {
-                                if account != self.UDIDStringKey {
+                                if account != KeyChain.UDIDStringKey {
                                     if value == chainBoolTrue {
                                         values.append(true)
                                     } else if value == chainBoolFalse {
@@ -226,6 +240,7 @@ public class KeyChain {
         dict[kSecClass] = kSecClassGenericPassword
         dict[kSecAttrService] = self.serviceName
         dict[kSecAttrSynchronizable] = self.synchronizable ? kCFBooleanTrue : kCFBooleanFalse
+
         if let group = self.group, !group.isEmpty {
             dict[kSecAttrAccessGroup] = group
         }

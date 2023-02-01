@@ -13,8 +13,8 @@ Pod::Spec.new do |s|
   s.author           = { 'darvin' => 'darvin@tcoding.cn' }
   s.source           = { :git => 'https://github.com/darvintang/DVTSecurity.git', :tag => s.version.to_s }
 
-  s.ios.deployment_target = '12.0'
-  s.osx.deployment_target = '10.14'
+  s.ios.deployment_target = '13'
+  s.osx.deployment_target = '11'
 
   s.source_files = 'Sources/**/*.swift'
   s.frameworks = 'Security'
