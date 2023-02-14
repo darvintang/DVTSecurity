@@ -9,19 +9,18 @@
 import Foundation
 
 public protocol Message {
-    var data: Data { get }
-    var base64String: String { get }
+    // MARK: Lifecycle
     init(data: Data)
     init(base64Encoded base64String: String) throws
+
+    // MARK: Internal
+    var data: Data { get }
+    var base64String: String { get }
 }
 
 public extension Message {
-    
-    /// Base64-encoded string of the message data
-    var base64String: String {
-        return data.base64EncodedString()
-    }
-    
+    // MARK: Lifecycle
+
     /// Creates an encrypted message with a base64-encoded string.
     ///
     /// - Parameter base64String: Base64-encoded data of the encrypted message
@@ -31,5 +30,12 @@ public extension Message {
             throw SwiftyRSAError.invalidBase64String
         }
         self.init(data: data)
+    }
+
+    // MARK: Internal
+
+    /// Base64-encoded string of the message data
+    var base64String: String {
+        return data.base64EncodedString()
     }
 }

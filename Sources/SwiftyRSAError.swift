@@ -38,8 +38,10 @@ public enum SwiftyRSAError: Error {
 
     case signatureCreateFailed(description: String)
     case signatureVerifyFailed(description: String)
+}
 
-    var localizedDescription: String {
+extension SwiftyRSAError: LocalizedError {
+    public var errorDescription: String? {
         switch self {
             case .pemDoesNotContainKey:
                 return "Couldn't get data from PEM key: no data available after stripping headers"

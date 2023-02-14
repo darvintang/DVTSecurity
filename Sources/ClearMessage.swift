@@ -6,13 +6,11 @@
 //  Copyright © 2017 Scoop. All rights reserved.
 //
 
-import Foundation
 import Security
+import Foundation
 
 public class ClearMessage: Message {
-    /// Data of the message
-    public let data: Data
-
+    // MARK: Lifecycle
     /// Creates a clear message with data.
     ///
     /// - Parameter data: Data of the clear message
@@ -33,6 +31,10 @@ public class ClearMessage: Message {
         self.init(data: data)
     }
 
+    // MARK: Public
+    /// Data of the message
+    public let data: Data
+
     /// Returns the string representation of the clear message using the specified
     /// string encoding.
     ///
@@ -50,12 +52,12 @@ public class ClearMessage: Message {
     ///
     /// - Parameters:
     ///   - key: Public key to encrypt the clear message with
-    ///   - padding: Padding to use during the encryption
+    ///   - algorithm: One of SecKeyAlgorithm constants suitable to perform encryption with this key.
     /// - Returns: Encrypted message
     /// - Throws: SwiftyRSAError
-    public func encrypted(with key: PublicKey, padding: NewPadding) throws -> EncryptedMessage {
+    public func encrypted(with key: PublicKey, algorithm type: AlgorithmType) throws -> EncryptedMessage {
         var error: Unmanaged<CFError>?
-        let encryptedData = SecKeyCreateEncryptedData(key.reference, padding, self.data as CFData, &error)
+        let encryptedData = SecKeyCreateEncryptedData(key.reference, type, self.data as CFData, &error)
 
         if let error = error?.takeRetainedValue() {
             throw SwiftyRSAError.encryptFailed(description: error.localizedDescription)
@@ -75,9 +77,9 @@ public class ClearMessage: Message {
     ///   - digestType: Digest
     /// - Returns: Signature of the clear message after signing it with the specified digest type.
     /// - Throws: SwiftyRSAError
-    public func signed(with key: PrivateKey, digestType: Signature.DigestType) throws -> Signature {
+    public func signed(with key: PrivateKey, digest type: Signature.DigestType) throws -> Signature {
         var error: Unmanaged<CFError>?
-        let signatureData = SecKeyCreateSignature(key.reference, digestType.padding, self.data as CFData, &error)
+        let signatureData = SecKeyCreateSignature(key.reference, type.algorithm, self.data as CFData, &error)
 
         if let error = error?.takeRetainedValue() {
             throw SwiftyRSAError.signatureCreateFailed(description: error.localizedDescription)
@@ -96,9 +98,9 @@ public class ClearMessage: Message {
     ///   - digestType: Digest type used for the signature
     /// - Returns: Result of the verification
     /// - Throws: SwiftyRSAError
-    public func verify(with key: PublicKey, signature: Signature, digestType: Signature.DigestType) throws -> Bool {
+    public func verify(with key: PublicKey, signature: Signature, digest type: Signature.DigestType) throws -> Bool {
         var error: Unmanaged<CFError>?
-        let verify = SecKeyVerifySignature(key.reference, digestType.padding, self.data as CFData, signature.data as CFData, &error)
+        let verify = SecKeyVerifySignature(key.reference, type.algorithm, self.data as CFData, signature.data as CFData, &error)
         if let error = error?.takeRetainedValue() {
             throw SwiftyRSAError.signatureVerifyFailed(description: error.localizedDescription)
         }

@@ -7,13 +7,26 @@
 //  Copyright (c) 2015 Scoop Technologies, Inc. All rights reserved.
 //
 
-import Foundation
 import Security
+import Foundation
 
 public typealias Padding = SecPadding
-public typealias NewPadding = SecKeyAlgorithm
+public typealias AlgorithmType = SecKeyAlgorithm
 
 public enum SwiftyRSA {
+    // MARK: Public
+    /// Will generate a new private and public key
+    ///
+    /// - Parameters:
+    ///   - size: Indicates the total number of bits in this cryptographic key
+    /// - Returns: A touple of a private and public key
+    /// - Throws: Throws and error if the tag cant be parsed or if keygeneration fails
+    @available(iOS 10.0, watchOS 3.0, tvOS 10.0, *)
+    public static func generateRSAKeyPair(sizeInBits size: Int) throws -> (privateKey: PrivateKey, publicKey: PublicKey) {
+        return try self.generateRSAKeyPair(sizeInBits: size, applyUnitTestWorkaround: false)
+    }
+
+    // MARK: Internal
     static func base64String(pemEncoded pemString: String) throws -> String {
         let lines = pemString.components(separatedBy: "\n").filter { line in
             !line.hasPrefix("-----BEGIN") && !line.hasPrefix("-----END")
@@ -55,11 +68,9 @@ public enum SwiftyRSA {
         // See https://tools.ietf.org/html/rfc7468#page-11 (example)
         let chunks = split(keyData.base64EncodedString(), byChunksOfLength: 64)
 
-        let pem = [
-            "-----BEGIN \(pemType)-----",
-            chunks.joined(separator: "\n"),
-            "-----END \(pemType)-----",
-        ]
+        let pem = ["-----BEGIN \(pemType)-----",
+                   chunks.joined(separator: "\n"),
+                   "-----END \(pemType)-----"]
 
         return pem.joined(separator: "\n")
     }
@@ -78,12 +89,10 @@ public enum SwiftyRSA {
             // and delete the key again.
         } else {
             let temporaryTag = UUID().uuidString
-            let addParams: [CFString: Any] = [
-                kSecValueRef: reference,
-                kSecReturnData: true,
-                kSecClass: kSecClassKey,
-                kSecAttrApplicationTag: temporaryTag,
-            ]
+            let addParams: [CFString: Any] = [kSecValueRef: reference,
+                                              kSecReturnData: true,
+                                              kSecClass: kSecClassKey,
+                                              kSecAttrApplicationTag: temporaryTag]
 
             var data: AnyObject?
             let addStatus = SecItemAdd(addParams as CFDictionary, &data)
@@ -91,26 +100,13 @@ public enum SwiftyRSA {
                 throw SwiftyRSAError.keyAddFailed(status: addStatus)
             }
 
-            let deleteParams: [CFString: Any] = [
-                kSecClass: kSecClassKey,
-                kSecAttrApplicationTag: temporaryTag,
-            ]
+            let deleteParams: [CFString: Any] = [kSecClass: kSecClassKey,
+                                                 kSecAttrApplicationTag: temporaryTag]
 
             _ = SecItemDelete(deleteParams as CFDictionary)
 
             return unwrappedData
         }
-    }
-
-    /// Will generate a new private and public key
-    ///
-    /// - Parameters:
-    ///   - size: Indicates the total number of bits in this cryptographic key
-    /// - Returns: A touple of a private and public key
-    /// - Throws: Throws and error if the tag cant be parsed or if keygeneration fails
-    @available(iOS 10.0, watchOS 3.0, tvOS 10.0, *)
-    public static func generateRSAKeyPair(sizeInBits size: Int) throws -> (privateKey: PrivateKey, publicKey: PublicKey) {
-        return try self.generateRSAKeyPair(sizeInBits: size, applyUnitTestWorkaround: false)
     }
 
     @available(iOS 10.0, watchOS 3.0, tvOS 10.0, *)
@@ -124,14 +120,10 @@ public enum SwiftyRSA {
         // @see https://stackoverflow.com/q/48414685/646960
         let isPermanent = applyUnitTestWorkaround ? false : true
 
-        let attributes: [CFString: Any] = [
-            kSecAttrKeyType: kSecAttrKeyTypeRSA,
-            kSecAttrKeySizeInBits: size,
-            kSecPrivateKeyAttrs: [
-                kSecAttrIsPermanent: isPermanent,
-                kSecAttrApplicationTag: tagData,
-            ],
-        ]
+        let attributes: [CFString: Any] = [kSecAttrKeyType: kSecAttrKeyTypeRSA,
+                                           kSecAttrKeySizeInBits: size,
+                                           kSecPrivateKeyAttrs: [kSecAttrIsPermanent: isPermanent,
+                                                                 kSecAttrApplicationTag: tagData]]
 
         var error: Unmanaged<CFError>?
         guard let privKey = SecKeyCreateRandomKey(attributes as CFDictionary, &error),
@@ -156,12 +148,10 @@ public enum SwiftyRSA {
         // On iOS 10+, we can use SecKeyCreateWithData without going through the keychain
         if #available(iOS 10.0, *), #available(watchOS 3.0, *), #available(tvOS 10.0, *) {
             let sizeInBits = keyData.count * 8
-            let keyDict: [CFString: Any] = [
-                kSecAttrKeyType: kSecAttrKeyTypeRSA,
-                kSecAttrKeyClass: keyClass,
-                kSecAttrKeySizeInBits: NSNumber(value: sizeInBits),
-                kSecReturnPersistentRef: true,
-            ]
+            let keyDict: [CFString: Any] = [kSecAttrKeyType: kSecAttrKeyTypeRSA,
+                                            kSecAttrKeyClass: keyClass,
+                                            kSecAttrKeySizeInBits: NSNumber(value: sizeInBits),
+                                            kSecReturnPersistentRef: true]
 
             var error: Unmanaged<CFError>?
             guard let key = SecKeyCreateWithData(keyData as CFData, keyDict as CFDictionary, &error) else {
@@ -173,29 +163,25 @@ public enum SwiftyRSA {
         } else {
             let persistKey = UnsafeMutablePointer<AnyObject?>(mutating: nil)
 
-            let keyAddDict: [CFString: Any] = [
-                kSecClass: kSecClassKey,
-                kSecAttrApplicationTag: tagData,
-                kSecAttrKeyType: kSecAttrKeyTypeRSA,
-                kSecValueData: keyData,
-                kSecAttrKeyClass: keyClass,
-                kSecReturnPersistentRef: true,
-                kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlock,
-            ]
+            let keyAddDict: [CFString: Any] = [kSecClass: kSecClassKey,
+                                               kSecAttrApplicationTag: tagData,
+                                               kSecAttrKeyType: kSecAttrKeyTypeRSA,
+                                               kSecValueData: keyData,
+                                               kSecAttrKeyClass: keyClass,
+                                               kSecReturnPersistentRef: true,
+                                               kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlock]
 
             let addStatus = SecItemAdd(keyAddDict as CFDictionary, persistKey)
             guard addStatus == errSecSuccess || addStatus == errSecDuplicateItem else {
                 throw SwiftyRSAError.keyAddFailed(status: addStatus)
             }
 
-            let keyCopyDict: [CFString: Any] = [
-                kSecClass: kSecClassKey,
-                kSecAttrApplicationTag: tagData,
-                kSecAttrKeyType: kSecAttrKeyTypeRSA,
-                kSecAttrKeyClass: keyClass,
-                kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlock,
-                kSecReturnRef: true,
-            ]
+            let keyCopyDict: [CFString: Any] = [kSecClass: kSecClassKey,
+                                                kSecAttrApplicationTag: tagData,
+                                                kSecAttrKeyType: kSecAttrKeyTypeRSA,
+                                                kSecAttrKeyClass: keyClass,
+                                                kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlock,
+                                                kSecReturnRef: true]
 
             // Now fetch the SecKeyRef version of the key
             var keyRef: AnyObject?
@@ -276,7 +262,7 @@ public enum SwiftyRSA {
         throw SwiftyRSAError.invalidAsn1Structure
     }
 
-    /**
+    /*
         This method prepend the x509 header to the given PublicKey data.
         If the key already contain a x509 header, the given data is returned as is.
             It letterally does the opposite of the previous method :
@@ -311,11 +297,9 @@ public enum SwiftyRSA {
             return
         }
 
-        let keyRemoveDict: [CFString: Any] = [
-            kSecClass: kSecClassKey,
-            kSecAttrKeyType: kSecAttrKeyTypeRSA,
-            kSecAttrApplicationTag: tagData,
-        ]
+        let keyRemoveDict: [CFString: Any] = [kSecClass: kSecClassKey,
+                                              kSecAttrKeyType: kSecAttrKeyTypeRSA,
+                                              kSecAttrApplicationTag: tagData]
 
         SecItemDelete(keyRemoveDict as CFDictionary)
     }

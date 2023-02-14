@@ -9,9 +9,7 @@
 import Foundation
 
 public class EncryptedMessage: Message {
-    /// Data of the message
-    public let data: Data
-
+    // MARK: Lifecycle
     /// Creates an encrypted message with data.
     ///
     /// - Parameter data: Data of the encrypted message.
@@ -19,16 +17,20 @@ public class EncryptedMessage: Message {
         self.data = data
     }
 
+    // MARK: Public
+    /// Data of the message
+    public let data: Data
+
     /// Decrypts an encrypted message with a private key and returns a clear message.
     ///
     /// - Parameters:
     ///   - key: Private key to decrypt the mssage with
-    ///   - padding: Padding to use during the decryption
+    ///   - algorithm: One of SecKeyAlgorithm constants suitable to perform encryption with this key.
     /// - Returns: Clear message
     /// - Throws: SwiftyRSAError
-    public func decrypted(with key: PrivateKey, padding: NewPadding) throws -> ClearMessage {
+    public func decrypted(with key: PrivateKey, algorithm type: AlgorithmType) throws -> ClearMessage {
         var error: Unmanaged<CFError>?
-        let decryptedData = SecKeyCreateDecryptedData(key.reference, padding, self.data as CFData, &error)
+        let decryptedData = SecKeyCreateDecryptedData(key.reference, type, self.data as CFData, &error)
 
         if let error = error?.takeRetainedValue() {
             throw SwiftyRSAError.decryptFailed(description: error.localizedDescription)

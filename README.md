@@ -1,6 +1,6 @@
 # DVTSecurity
 
-[![Version](https://img.shields.io/cocoapods/v/DVTSecurity.svg?style=flat)](https://cocoapods.org/pods/DVTSecurity)[![License](https://img.shields.io/cocoapods/l/DVTSecurity.svg?style=flat)](https://cocoapods.org/pods/DVTSecurity)[![Platform](https://img.shields.io/cocoapods/p/DVTSecurity.svg?style=flat)](https://cocoapods.org/pods/DVTSecurity)[![Swift Package Manager](https://rawgit.com/jlyonsmith/artwork/master/SwiftPackageManager/swiftpackagemanager-compatible.svg)](https://swift.org/package-manager/)
+[![Version](https://img.shields.io/cocoapods/v/DVTSecurity.svg?style=flat)](https://cocoapods.org/pods/DVTSecurity) [![License](https://img.shields.io/cocoapods/l/DVTSecurity.svg?style=flat)](https://cocoapods.org/pods/DVTSecurity) [![Platform](https://img.shields.io/cocoapods/p/DVTSecurity.svg?style=flat)](https://cocoapods.org/pods/DVTSecurity) [![Swift Package Manager](https://rawgit.com/jlyonsmith/artwork/master/SwiftPackageManager/swiftpackagemanager-compatible.svg)](https://swift.org/package-manager/)
 
 
 来自SwiftyRSA，移除OC支持，添加SMP配置使用，添加Keychain，适配最新的接口

@@ -31,19 +31,14 @@
 
  */
 
-import Foundation
 import Security
+import Foundation
 
 private let chainBoolTrue = "KeyChain:True"
 private let chainBoolFalse = "KeyChain:False"
 
 public class KeyChain {
-    private var uuid: String
-    private var synchronizable: Bool
-    private var queue: DispatchQueue
-    private let KeyChainTestKey = "cn.tcoding.Security.KeyChain.KeyChainTestKey"
-    private let serviceName: String
-
+    // MARK: Lifecycle
     public init(iCloud synchronizable: Bool = false) {
         self.synchronizable = synchronizable
         self.uuid = UUID().uuidString
@@ -51,22 +46,10 @@ public class KeyChain {
         self.serviceName = (Bundle.main.infoDictionary?["CFBundleIdentifier"] as? String) ?? ""
     }
 
-    /// 应用分组，跨应用读取数据
-    public var group: String?
-
-    /// 测试keychain，在设置group之后如果group设置出错会出现报错异常
-    /// - Returns: 测试结果
-    public func test() -> Error? {
-        self.set(true, for: self.KeyChainTestKey)
-    }
-
-    private static let _default = KeyChain()
+    // MARK: Public
     public static var `default`: KeyChain {
         _default
     }
-
-    private let userDefaultsPrefix = "UserDefaults_DVTSecurity_Prefix_"
-    private static let UDIDStringKey = "cn.tcoding.Security.KeyChain.UDIDStringKey"
 
     /// udid替代品，通过将udid保存到keychain来定义设备标识，在系统还原之后会被重置
     public static var UDIDString: String {
@@ -83,35 +66,32 @@ public class KeyChain {
         return uuidString
     }
 
+    /// 应用分组，跨应用读取数据
+    public var group: String?
+
     @available(*, unavailable, message: "2.0.1版本之后弃用该方法")
     public var UDIDString: String {
         Self.UDIDString
     }
 
-    private func getError(_ code: OSStatus) -> Error? {
-        if errSecSuccess == code {
-            return nil
-        }
-        var domain = ""
-        domain = SecCopyErrorMessageString(code, &domain) as? String ?? "系统错误"
-        return NSError(domain: domain, code: Int(code))
+    /// 测试keychain，在设置group之后如果group设置出错会出现报错异常
+    /// - Returns: 测试结果
+    public func test() -> Error? {
+        self.set(true, for: self.KeyChainTestKey)
     }
 
-    @discardableResult
-    public func set(_ value: Bool, for key: String, use defaults: Bool = false) -> Error? {
+    @discardableResult public func set(_ value: Bool, for key: String, use defaults: Bool = false) -> Error? {
         return self.set(value ? chainBoolTrue : chainBoolFalse, for: key, use: defaults)
     }
 
-    @discardableResult
-    public func set(_ value: String, for key: String, use defaults: Bool = false) -> Error? {
+    @discardableResult public func set(_ value: String, for key: String, use defaults: Bool = false) -> Error? {
         guard let data = value.data(using: .utf8) else {
             return self.getError(errSecDataNotAvailable)
         }
         return self.set(data, for: key, use: defaults)
     }
 
-    @discardableResult
-    public func set(_ value: Data, for key: String, use defaults: Bool = false) -> Error? {
+    @discardableResult public func set(_ value: Data, for key: String, use defaults: Bool = false) -> Error? {
         var keyChainItem = self.create(for: key, value: value)
         keyChainItem[kSecAttrAccessible] = kSecAttrAccessibleAfterFirstUnlock
         if defaults {
@@ -175,8 +155,7 @@ public class KeyChain {
 
     /// 清理keychain存放到数据
     /// - Parameter key: key值，如果不传则全部清除
-    @discardableResult
-    public func delete(for key: String? = nil) -> Any? {
+    @discardableResult public func delete(for key: String? = nil) -> Any? {
         var keyChainItem = self.create(for: key)
         if let tkey = key {
             if let data = self.value(for: tkey), let value = String(data: data, encoding: .utf8) {
@@ -208,7 +187,8 @@ public class KeyChain {
                     var values = [Any]()
                     if let results = result as? [[CFString: Any]] {
                         for attributes in results {
-                            if let account = attributes[kSecAttrAccount] as? String, let data = attributes[kSecValueData] as? Data, let value = String(data: data, encoding: .utf8) {
+                            if let account = attributes[kSecAttrAccount] as? String, let data = attributes[kSecValueData] as? Data,
+                               let value = String(data: data, encoding: .utf8) {
                                 if account != KeyChain.UDIDStringKey {
                                     if value == chainBoolTrue {
                                         values.append(true)
@@ -232,7 +212,27 @@ public class KeyChain {
         }
     }
 
+    // MARK: Private
+    private static let _default = KeyChain()
+    private static let UDIDStringKey = "cn.tcoding.Security.KeyChain.UDIDStringKey"
+
+    private var uuid: String
+    private var synchronizable: Bool
+    private var queue: DispatchQueue
+    private let KeyChainTestKey = "cn.tcoding.Security.KeyChain.KeyChainTestKey"
+    private let serviceName: String
+
+    private let userDefaultsPrefix = "UserDefaults_DVTSecurity_Prefix_"
     private var cache: [String: Data] = [:]
+
+    private func getError(_ code: OSStatus) -> Error? {
+        if errSecSuccess == code {
+            return nil
+        }
+        var domain = ""
+        domain = SecCopyErrorMessageString(code, &domain) as? String ?? "系统错误"
+        return NSError(domain: domain, code: Int(code))
+    }
 
     private func create(for key: String? = nil, value: Data? = nil) -> [CFString: Any] {
         var dict = [CFString: Any]()

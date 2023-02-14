@@ -34,28 +34,30 @@
 import Foundation
 
 public struct RSABaseWrapper<RSAT> {
-    public var base: RSAT
+    // MARK: Lifecycle
     public init(_ value: RSAT) {
         self.base = value
     }
+
+    // MARK: Public
+    public var base: RSAT
 }
 
 public protocol RSANameSpace {
     associatedtype RSAT
-    var rsa: RSAT { set get }
     static var rsa: RSAT.Type { get }
+
+    var rsa: RSAT { set get }
 }
 
 public extension RSANameSpace {
-    var rsa: RSABaseWrapper<Self> { set {} get { RSABaseWrapper(self) }}
-
     static var rsa: RSABaseWrapper<Self>.Type { RSABaseWrapper.self }
+
+    var rsa: RSABaseWrapper<Self> { set { } get { RSABaseWrapper(self) }}
 }
 
 public struct DVTRSA {
-    private static var publicPem: String?
-    private static var privatePem: String?
-
+    // MARK: Public
     public static var publicKey: PublicKey?
     public static var privateKey: PrivateKey?
 
@@ -96,4 +98,8 @@ public struct DVTRSA {
             self.privatePem
         }
     }
+
+    // MARK: Private
+    private static var publicPem: String?
+    private static var privatePem: String?
 }

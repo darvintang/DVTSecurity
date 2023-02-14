@@ -9,27 +9,7 @@
 import Foundation
 
 public class Signature {
-    public enum DigestType {
-        case sha1
-        case sha224
-        case sha256
-        case sha384
-        case sha512
-
-        var padding: NewPadding {
-            switch self {
-                case .sha1: return .rsaSignatureDigestPKCS1v15SHA1
-                case .sha224: return .rsaSignatureDigestPKCS1v15SHA224
-                case .sha256: return .rsaSignatureDigestPKCS1v15SHA256
-                case .sha384: return .rsaSignatureDigestPKCS1v15SHA384
-                case .sha512: return .rsaSignatureDigestPKCS1v15SHA512
-            }
-        }
-    }
-
-    /// Data of the signature
-    public let data: Data
-
+    // MARK: Lifecycle
     /// Creates a signature with data.
     ///
     /// - Parameter data: Data of the signature
@@ -47,6 +27,29 @@ public class Signature {
         }
         self.init(data: data)
     }
+
+    // MARK: Public
+    public enum DigestType {
+        case sha1
+        case sha224
+        case sha256
+        case sha384
+        case sha512
+
+        // MARK: Internal
+        var algorithm: AlgorithmType {
+            switch self {
+                case .sha1: return .rsaSignatureDigestPKCS1v15SHA1
+                case .sha224: return .rsaSignatureDigestPKCS1v15SHA224
+                case .sha256: return .rsaSignatureDigestPKCS1v15SHA256
+                case .sha384: return .rsaSignatureDigestPKCS1v15SHA384
+                case .sha512: return .rsaSignatureDigestPKCS1v15SHA512
+            }
+        }
+    }
+
+    /// Data of the signature
+    public let data: Data
 
     /// Returns the base64 representation of the signature.
     public var base64String: String {

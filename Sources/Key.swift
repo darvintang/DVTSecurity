@@ -6,40 +6,32 @@
 //  Copyright © 2016 Scoop. All rights reserved.
 //
 
-import Foundation
 import Security
+import Foundation
 
 public protocol Key: AnyObject {
-    
-    var reference: SecKey { get }
-    var originalData: Data? { get }
-    
+    // MARK: Lifecycle
+
     init(data: Data) throws
     init(reference: SecKey) throws
     init(base64Encoded base64String: String) throws
     init(pemEncoded pemString: String) throws
     init(pemNamed pemName: String, in bundle: Bundle) throws
     init(derNamed derName: String, in bundle: Bundle) throws
-    
+
+    // MARK: Internal
+
+    var reference: SecKey { get }
+    var originalData: Data? { get }
+
     func pemString() throws -> String
     func data() throws -> Data
     func base64String() throws -> String
 }
 
 public extension Key {
-    
-    /// Returns a Base64 representation of the public key.
-    ///
-    /// - Returns: Data of the key, Base64-encoded
-    /// - Throws: SwiftyRSAError
-    func base64String() throws -> String {
-        return try data().base64EncodedString()
-    }
-    
-    func data() throws -> Data {
-        return try SwiftyRSA.data(forKeyReference: reference)
-    }
-    
+    // MARK: Lifecycle
+
     /// Creates a public key with a base64-encoded string.
     ///
     /// - Parameter base64String: Base64-encoded public key data
@@ -50,7 +42,7 @@ public extension Key {
         }
         try self.init(data: data)
     }
-    
+
     /// Creates a public key with a PEM string.
     ///
     /// - Parameter pemString: PEM-encoded public key string
@@ -59,7 +51,7 @@ public extension Key {
         let base64String = try SwiftyRSA.base64String(pemEncoded: pemString)
         try self.init(base64Encoded: base64String)
     }
-    
+
     /// Creates a public key with a PEM file.
     ///
     /// - Parameters:
@@ -73,7 +65,7 @@ public extension Key {
         let keyString = try String(contentsOf: URL(fileURLWithPath: path), encoding: .utf8)
         try self.init(pemEncoded: keyString)
     }
-    
+
     /// Creates a private key with a DER file.
     ///
     /// - Parameters:
@@ -86,5 +78,19 @@ public extension Key {
         }
         let data = try Data(contentsOf: URL(fileURLWithPath: path))
         try self.init(data: data)
+    }
+
+    // MARK: Internal
+
+    /// Returns a Base64 representation of the public key.
+    ///
+    /// - Returns: Data of the key, Base64-encoded
+    /// - Throws: SwiftyRSAError
+    func base64String() throws -> String {
+        return try data().base64EncodedString()
+    }
+
+    func data() throws -> Data {
+        return try SwiftyRSA.data(forKeyReference: reference)
     }
 }
