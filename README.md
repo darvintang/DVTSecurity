@@ -229,5 +229,5 @@ Inspired from
  - <https://github.com/btnguyen2k/swift-rsautils>
  - <https://github.com/TakeScoop/SwiftyRSA>
 
-原项目地址：[SwiftyRSA](https://github.com/TakeScoop/SwiftyRSA)
+原项目地址：[SwiftyRSA](https://github.com/TakeScoop/SwiftyRSA) version：1.8.0
 原项目License：[LICENSE](https://github.com/TakeScoop/SwiftyRSA/blob/master/LICENSE)

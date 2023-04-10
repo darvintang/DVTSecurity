@@ -1,10 +1,35 @@
 //
 //  ClearMessage.swift
-//  SwiftyRSA
+//  DVTSecurity
 //
 //  Created by Lois Di Qual on 5/18/17.
-//  Copyright © 2017 Scoop. All rights reserved.
 //
+
+/*
+
+ MIT License
+
+ Copyright (c) 2023 darvin http://blog.tcoding.cn
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+
+ */
 
 import Security
 import Foundation
@@ -23,10 +48,10 @@ public class ClearMessage: Message {
     /// - Parameters:
     ///   - string: String value of the clear message
     ///   - encoding: Encoding to use to generate the clear data
-    /// - Throws: SwiftyRSAError
+    /// - Throws: SecurityError.RSA
     public convenience init(string: String, using encoding: String.Encoding) throws {
         guard let data = string.data(using: encoding) else {
-            throw SwiftyRSAError.stringToDataConversionFailed
+            throw SecurityError.Conversion.stringToDataConversionFailed
         }
         self.init(data: data)
     }
@@ -40,10 +65,10 @@ public class ClearMessage: Message {
     ///
     /// - Parameter encoding: Encoding to use during the string conversion
     /// - Returns: String representation of the clear message
-    /// - Throws: SwiftyRSAError
+    /// - Throws: SecurityError.RSA
     public func string(encoding: String.Encoding) throws -> String {
         guard let str = String(data: data, encoding: encoding) else {
-            throw SwiftyRSAError.dataToStringConversionFailed
+            throw SecurityError.Conversion.dataToStringConversionFailed
         }
         return str
     }
@@ -54,16 +79,16 @@ public class ClearMessage: Message {
     ///   - key: Public key to encrypt the clear message with
     ///   - algorithm: One of SecKeyAlgorithm constants suitable to perform encryption with this key.
     /// - Returns: Encrypted message
-    /// - Throws: SwiftyRSAError
+    /// - Throws: SecurityError.RSA
     public func encrypted(with key: PublicKey, algorithm type: AlgorithmType) throws -> EncryptedMessage {
         var error: Unmanaged<CFError>?
         let encryptedData = SecKeyCreateEncryptedData(key.reference, type, self.data as CFData, &error)
 
         if let error = error?.takeRetainedValue() {
-            throw SwiftyRSAError.encryptFailed(description: error.localizedDescription)
+            throw SecurityError.RSA.encryptFailed(description: error.localizedDescription)
         }
         guard let resultData = encryptedData as? Data else {
-            throw SwiftyRSAError.encryptFailed(description: "Encryption result data is empty")
+            throw SecurityError.RSA.encryptFailed(description: "Encryption result data is empty")
         }
         return EncryptedMessage(data: resultData)
     }
@@ -76,16 +101,16 @@ public class ClearMessage: Message {
     ///   - key: Private key to sign the clear message with
     ///   - digestType: Digest
     /// - Returns: Signature of the clear message after signing it with the specified digest type.
-    /// - Throws: SwiftyRSAError
+    /// - Throws: SecurityError.RSA
     public func signed(with key: PrivateKey, digest type: Signature.DigestType) throws -> Signature {
         var error: Unmanaged<CFError>?
         let signatureData = SecKeyCreateSignature(key.reference, type.algorithm, self.data as CFData, &error)
 
         if let error = error?.takeRetainedValue() {
-            throw SwiftyRSAError.signatureCreateFailed(description: error.localizedDescription)
+            throw SecurityError.RSA.signatureCreateFailed(description: error.localizedDescription)
         }
         guard let resultData = signatureData as? Data else {
-            throw SwiftyRSAError.signatureCreateFailed(description: "Signature result data is empty")
+            throw SecurityError.RSA.signatureCreateFailed(description: "Signature result data is empty")
         }
         return Signature(data: resultData)
     }
@@ -97,12 +122,12 @@ public class ClearMessage: Message {
     ///   - signature: Signature to verify
     ///   - digestType: Digest type used for the signature
     /// - Returns: Result of the verification
-    /// - Throws: SwiftyRSAError
+    /// - Throws: SecurityError.RSA
     public func verify(with key: PublicKey, signature: Signature, digest type: Signature.DigestType) throws -> Bool {
         var error: Unmanaged<CFError>?
         let verify = SecKeyVerifySignature(key.reference, type.algorithm, self.data as CFData, signature.data as CFData, &error)
         if let error = error?.takeRetainedValue() {
-            throw SwiftyRSAError.signatureVerifyFailed(description: error.localizedDescription)
+            throw SecurityError.RSA.signatureVerifyFailed(description: error.localizedDescription)
         }
         return verify
     }

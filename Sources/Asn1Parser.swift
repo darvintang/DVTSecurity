@@ -1,17 +1,41 @@
 //
 //  Asn1Parser.swift
-//  SwiftyRSA
+//  DVTSecurity
 //
 //  Created by Lois Di Qual on 5/9/17.
-//  Copyright © 2017 Scoop. All rights reserved.
 //
+
+/*
+
+ MIT License
+
+ Copyright (c) 2023 darvin http://blog.tcoding.cn
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+
+ */
 
 import Foundation
 
 /// Simple data scanner that consumes bytes from a raw data and keeps an updated position.
 private class Scanner {
     // MARK: Lifecycle
-
     /// Creates a scanner with provided data
     ///
     /// - Parameter data: Data to consume
@@ -20,7 +44,6 @@ private class Scanner {
     }
 
     // MARK: Internal
-
     enum ScannerError: Error {
         case outOfBounds
     }
@@ -116,7 +139,6 @@ private extension Data {
 /// it will recursively parse its children.
 enum Asn1Parser {
     // MARK: Internal
-
     /// An ASN1 node
     enum Node {
         case sequence(nodes: [Node])
@@ -144,7 +166,6 @@ enum Asn1Parser {
     }
 
     // MARK: Private
-
     /// Parses an ASN1 given an existing scanne.
     /// @warning: this will modify the state (ie: position) of the provided scanner.
     ///
