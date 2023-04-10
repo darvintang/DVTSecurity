@@ -64,12 +64,20 @@ public extension AESBaseWrapper where AESType == String {
     ///   - key: 密钥
     ///   - vector: 偏移矢量
     /// - Returns: 加密后的结果
-    func encrypt(_ Key: String, vector iv: String? = nil) throws -> String {
+    func encryptData(_ Key: String, vector iv: String? = nil) throws -> Data {
         guard let baseData = self.base.data(using: .utf8) else {
             throw SecurityError.Conversion.stringToDataConversionFailed
         }
-        let encryptData = try baseData.aes.encrypt(Key)
+        return try baseData.aes.encrypt(Key)
+    }
 
+    /// 获取加密后的字符串
+    /// - Parameters:
+    ///   - key: 密钥
+    ///   - vector: 偏移矢量
+    /// - Returns: 加密后的结果
+    func encrypt(_ Key: String, vector iv: String? = nil) throws -> String {
+        let encryptData = try self.encryptData(Key, vector: iv)
         guard let result = String(data: encryptData, encoding: .utf8) else {
             throw SecurityError.Conversion.dataToStringConversionFailed
         }
@@ -81,11 +89,20 @@ public extension AESBaseWrapper where AESType == String {
     ///   - key: 密钥
     ///   - vector: 类型
     /// - Returns: 解密后的结果
-    func decrypt(_ Key: String, vector iv: String? = nil) throws -> String {
+    func decryptData(_ Key: String, vector iv: String? = nil) throws -> Data {
         guard let baseData = Data(base64Encoded: self.base, options: [.ignoreUnknownCharacters]) else {
             throw SecurityError.Conversion.stringToDataConversionFailed
         }
-        let decryptData = try baseData.aes.decrypt(Key, vector: iv)
+        return try baseData.aes.decrypt(Key, vector: iv)
+    }
+
+    /// 获取解密后的字符串
+    /// - Parameters:
+    ///   - key: 密钥
+    ///   - vector: 类型
+    /// - Returns: 解密后的结果
+    func decrypt(_ Key: String, vector iv: String? = nil) throws -> String {
+        let decryptData = try self.decryptData(Key, vector: iv)
         guard let result = String(data: decryptData, encoding: .utf8) else {
             throw SecurityError.Conversion.dataToStringConversionFailed
         }
